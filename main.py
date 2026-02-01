@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from routes.database import get_db_sqlite_old, sessionLocal_pg, sessionLocal_sqlite,  Base_sqlite, Base_pg, engine_sqlite, Base_sqlite_old, engine_sqlite_old, engine_pg, get_db_pg, get_db_sqlite, get_db_sqlite_old, Base_sqlite_old
 from routes.models import UserDetails, posts_old, posts
-from routes.schema import UserLogin, Post
+from routes.schema import UserLogin, PostSchema
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -64,7 +64,15 @@ async def upload_file(db: Session = Depends(get_db_sqlite),
     with open(file_location, "wb") as f:
         shutil.copyfileobj(image.file, f)
 
-    db_posts = posts(author = author, title = title, content = content, fileName = image.filename)
+    user_information = PostSchema(
+        title = title,
+        content = content,
+        author = author,
+        fileName = image.filename
+    )
+
+    # db_posts = posts(author = author, title = title, content = content, fileName = image.filename)
+    db_posts = posts(**user_information.model_dump())
     db.add(db_posts)
     db.commit()
     db.refresh(db_posts)

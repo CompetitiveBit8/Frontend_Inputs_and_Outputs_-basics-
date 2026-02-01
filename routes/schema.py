@@ -4,7 +4,8 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
-class Post(BaseModel):
+class PostSchema(BaseModel):
     title: str
     content: str
     author: str
+    fileName: str
