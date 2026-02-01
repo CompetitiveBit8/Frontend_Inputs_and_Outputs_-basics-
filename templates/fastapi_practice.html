@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>FastAPI Practice Page</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -32,8 +33,23 @@
             margin-top: 15px;
             cursor: pointer;
         }
+        .post-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .post-card h4 {
+            margin: 0 0 8px 0;
+        }
+        .post-meta {
+            font-size: 0.85em;
+            color: #555;
+        }
     </style>
 </head>
+
 <body>
 
 <h1>FastAPI Full Practice Page</h1>
@@ -56,7 +72,7 @@
 </section>
 
 <section>
-    <h2>2️⃣ Create Post (Form + File Upload + Background Task)</h2>
+    <h2>2️⃣ Create Post (Form + File Upload)</h2>
     <form method="post" action="/upload" enctype="multipart/form-data">
 
         <label>
@@ -86,7 +102,7 @@
 <section>
     <h2>3️⃣ View Posts (Pagination + Filtering + Sorting)</h2>
 
-    <form method="get" action="/posts">
+    <form method="get" action="/posts" id="viewPostsForm">
 
         <label>
             Search Title
@@ -106,21 +122,27 @@
         <label>
             Sort By
             <select name="sort">
-                <option value="created_at">Created At</option>
                 <option value="title">Title</option>
+                <option value="author">Author</option>
             </select>
         </label>
 
         <label>
             Order
             <select name="order">
-                <option value="desc">Descending</option>
                 <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
             </select>
         </label>
 
         <button type="submit">Fetch Posts</button>
     </form>
+
+    <!-- RESULTS AREA -->
+    <div id="postsResult" style="margin-top:20px;">
+        <h3>Results</h3>
+        <div id="postsContent">No posts loaded.</div>
+    </div>
 </section>
 
 <section>
@@ -144,6 +166,65 @@
             return;
         }
         window.location.href = `http://127.0.0.1:8000/download/${postId}`;
+    }
+</script>
+
+<script>
+    // Notes:
+    // - Prevents page reload
+    // - Sends query params to FastAPI
+    // - Renders full post (title + content)
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const form = document.getElementById("viewPostsForm");
+        const contentBox = document.getElementById("postsContent");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            contentBox.innerHTML = "Loading posts...";
+
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+
+            try {
+                const response = await fetch(`/posts?${params.toString()}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const posts = await response.json();
+                renderPosts(posts);
+
+            } catch (err) {
+                contentBox.innerHTML =
+                    `<p style="color:red;">${err.message}</p>`;
+            }
+        });
+    });
+
+    function renderPosts(posts) {
+        const container = document.getElementById("postsContent");
+
+        if (!Array.isArray(posts) || posts.length === 0) {
+            container.innerHTML = "<p>No posts found.</p>";
+            return;
+        }
+
+        container.innerHTML = posts.map(post => `
+            <div class="post-card">
+                <h4>${post.title}</h4>
+
+                <p>${post.content}</p>
+
+                <div class="post-meta">
+                    Author: ${post.author ?? "N/A"} |
+                    Created: ${post.created_at}
+                </div>
+            </div>
+        `).join("");
     }
 </script>
 

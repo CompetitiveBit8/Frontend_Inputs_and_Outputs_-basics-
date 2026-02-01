@@ -1,13 +1,14 @@
-from fastapi import Depends, FastAPI, Request, Form, UploadFile, File, BackgroundTasks
+from fastapi import Depends, FastAPI, Request, Form, UploadFile, File, BackgroundTasks, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from routes.database import sessionLocal_pg, sessionLocal_sqlite,  Base_sqlite, Base_pg, engine_sqlite, engine_pg, get_db_pg, get_db_sqlite
-from routes.models import UserDetails
+from routes.database import get_db_sqlite_old, sessionLocal_pg, sessionLocal_sqlite,  Base_sqlite, Base_pg, engine_sqlite, Base_sqlite_old, engine_sqlite_old, engine_pg, get_db_pg, get_db_sqlite, get_db_sqlite_old, Base_sqlite_old
+from routes.models import UserDetails, posts_old
 from routes.schema import UserLogin, Post
 from sqlalchemy.orm import Session
 
 Base_sqlite.metadata.create_all(bind=engine_sqlite)
 Base_pg.metadata.create_all(bind=engine_pg)
+Base_sqlite_old.metadata.create_all(bind=engine_sqlite_old)
 
 app = FastAPI(title="FastAPI Challenge")
 
@@ -35,10 +36,36 @@ async def upload_file(db: Session = Depends(get_db_sqlite),  title: str = Form(.
     content = content
     return {"title": title, "content": content, "author": author}
 
-#View Posts (Pagination + Filtering + Sorting)
-@app.get("/posts/{post_id}")
-async def read_post():
-    pass
+
+#----------------------------DONE----------------------------
+#View Posts (Pagination + Filtering + Sorting)      
+@app.get("/posts")
+async def read_post(db: Session = Depends(get_db_sqlite_old), sort: str = Query("id"),
+                    page: int = Query(1, ge=1, le=30), order: str = Query("asc"),
+                    limit: int = Query(3, le=10), search: str = Query(None), 
+                    ):
+    
+    query = db.query(posts_old)
+
+    #search/filtering
+    if search:
+        query = query.filter(posts_old.title.ilike(f"%{search}%"))
+
+    skip = (page -1 ) * limit
+
+    post_count = query.count()
+
+    #Order and sorting
+    if order == "asc":
+        query = query.order_by(getattr(posts_old, sort).asc())
+    else:
+        query = query.order_by(getattr(posts_old, sort).desc())
+
+    #pagination
+    result = query.offset(skip).limit(limit).all()
+    return result
+
+
 
 #Download Uploaded Image
 @app.get("/image/{image_id}")

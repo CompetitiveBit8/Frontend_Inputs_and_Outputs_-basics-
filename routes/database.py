@@ -28,3 +28,17 @@ def get_db_sqlite():
         yield db
     finally:
         db.close()
+
+#----------New SQLite Connection----------
+
+DATABASE_URL_SQLITE = "sqlite:///posts_old.db"
+engine_sqlite_old = create_engine(DATABASE_URL_SQLITE, connect_args={"check_same_thread": False})
+sessionLocal_sqlite_old = sessionmaker(autocommit=False, autoflush=False, bind=engine_sqlite_old)
+Base_sqlite_old = declarative_base()
+
+def get_db_sqlite_old():
+    db_old = sessionLocal_sqlite_old()
+    try:
+        yield db_old
+    finally:
+        db_old.close()
