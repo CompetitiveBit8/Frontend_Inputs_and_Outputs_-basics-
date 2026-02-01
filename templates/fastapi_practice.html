@@ -134,6 +134,7 @@
                 <option value="desc">Descending</option>
             </select>
         </label>
+        <label>{{ post_count }}</label>
 
         <button type="submit">Fetch Posts</button>
     </form>
@@ -220,8 +221,7 @@
                 <p>${post.content}</p>
 
                 <div class="post-meta">
-                    Author: ${post.author ?? "N/A"} |
-                    Created: ${post.created_at}
+                    Author: ${post.author ?? "N/A"} 
                 </div>
             </div>
         `).join("");

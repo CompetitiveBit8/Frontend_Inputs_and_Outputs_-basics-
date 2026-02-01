@@ -2,18 +2,41 @@ from fastapi import Depends, FastAPI, Request, Form, UploadFile, File, Backgroun
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from routes.database import get_db_sqlite_old, sessionLocal_pg, sessionLocal_sqlite,  Base_sqlite, Base_pg, engine_sqlite, Base_sqlite_old, engine_sqlite_old, engine_pg, get_db_pg, get_db_sqlite, get_db_sqlite_old, Base_sqlite_old
-from routes.models import UserDetails, posts_old
+from routes.models import UserDetails, posts_old, posts
 from routes.schema import UserLogin, Post
 from sqlalchemy.orm import Session
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
+import os
+import shutil
 
+
+#creating tables
 Base_sqlite.metadata.create_all(bind=engine_sqlite)
 Base_pg.metadata.create_all(bind=engine_pg)
 Base_sqlite_old.metadata.create_all(bind=engine_sqlite_old)
 
 app = FastAPI(title="FastAPI Challenge")
 
+
+#Extra directory preparations
+Base_dir = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=Base_dir / "static"), name="static")
+
+templates = Jinja2Templates(directory=Base_dir / "templates")
+Upload_dir = "static/Uploads"
+os.makedirs(Upload_dir,exist_ok=True)
+
 templates =  Jinja2Templates(directory=("templates"))
 
+
+
+
+#           ---------------------------------------------ROUTERS--------------------------------------
+
+
+#Reading the homepage
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
     return templates.TemplateResponse("fastapi_practice.html", {"request": request, "title": "FastAPI Challenge"})
@@ -28,13 +51,25 @@ async def signUp():
 async def login():
     pass
 
+
+
+#----------------------------DONE----------------------------
 #Create Post (Form + File Upload + Background Task)
 @app.post("/upload")
-async def upload_file(db: Session = Depends(get_db_sqlite),  title: str = Form(...), content: str = Form(...), author: str = Form(...)):
-    author = author
-    title = title
-    content = content
-    return {"title": title, "content": content, "author": author}
+async def upload_file(db: Session = Depends(get_db_sqlite),  
+                      title: str = Form(...), content: str = Form(...), 
+                      image: UploadFile = File(...), author: str = Form(...)):
+
+    file_location = os.path.join(Upload_dir, image.filename)
+    with open(file_location, "wb") as f:
+        shutil.copyfileobj(image.file, f)
+
+    db_posts = posts(author = author, title = title, content = content, fileName = image.filename)
+    db.add(db_posts)
+    db.commit()
+    db.refresh(db_posts)
+    db.close()
+    return {"stored in" : file_location}
 
 
 #----------------------------DONE----------------------------
