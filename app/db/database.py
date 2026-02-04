@@ -1,8 +1,10 @@
 from sqlalchemy import create_engine
+from app.config.config import settings
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 #--------Postgress Connection--------
-DATABASE_URL_PG = "postgresql://postgres:Omonik3.@localhost:5432/UserDetails"
+DATABASE_URL_PG = settings.pg_link
+# DATABASE_URL_PG = "sqlite:///./test_pg.db"
 engine_pg = create_engine(DATABASE_URL_PG)
 sessionLocal_pg = sessionmaker(autocommit=False, autoflush=False, bind=engine_pg)
 Base_pg = declarative_base()

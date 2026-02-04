@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from .database import Base_pg, Base_sqlite
+from app.db.database import Base_pg, Base_sqlite
 
 class UserDetails(Base_pg):
     __tablename__ = "user_details"
