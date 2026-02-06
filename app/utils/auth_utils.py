@@ -40,7 +40,7 @@ def decode_access_token(request: Request = None):
 
 def create_refresh_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta if expires_delta else timedelta(minutes=5))
+    expire = datetime.utcnow() + (expires_delta if expires_delta else timedelta(minutes=settings.access_token_expire_time))
     to_encode.update({"exp": expire})
     encode_jtw = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encode_jtw

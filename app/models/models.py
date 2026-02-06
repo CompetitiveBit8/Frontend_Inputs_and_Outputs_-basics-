@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
-from app.db.database import Base_pg, Base_sqlite
+from app.db.database import Base, Base_sqlite
 from sqlalchemy.orm import relationship
 
-class UserDetails(Base_pg):
+class UserDetails(Base):
     __tablename__ = "user_details"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -10,7 +10,7 @@ class UserDetails(Base_pg):
     password = Column(String, index=True)
 
 
-class posts_old(Base_pg):
+class posts_old(Base):
     __tablename__ = "posts"
 
     id = Column(Integer, primary_key=True, index=True)

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     algorithm: str = os.getenv("ALGORITHM")
     access_token_expire_time: int = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTE")
     refresh_token_expire_days: int = os.getenv("REFRESH_TOKEN_EXPIRE_DAYS")
-    pg_link: str = os.getenv("postgres")
+    _link: str = os.getenv("users")
     sq_link: str = os.getenv("sqlite_1")
     sq_link_old: str = os.getenv("sqlite_2")
     
