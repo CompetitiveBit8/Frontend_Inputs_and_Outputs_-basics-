@@ -10,10 +10,10 @@ class UserDetails(Base):
     password = Column(String, index=True)
 
 
-class posts_old(Base_sqlite_old):
+class posts(Base_sqlite_old):
     __tablename__ = "posts"
 
-    id = Column(Integer, primary_key=True, unique=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     content = Column(String, index=True)
     author = Column(String, index=True)
@@ -23,11 +23,12 @@ class posts_old(Base_sqlite_old):
 
 
 class images(Base_sqlite_old):
-    __tablename__ = "image_info"
+    __tablename__ = "images"
 
-    id = Column(Integer, ForeignKey(posts_old.id), primary_key=True)
+    id = Column(Integer, primary_key=True)
     file_path = Column(String, index=True)
     file_name = Column(String, index=True)
     file_type = Column(String, index=True)
+    post_id = Column(Integer, ForeignKey(posts.id))
 
-    post = relationship("posts_old", back_populates="image") 
+    post = relationship("posts", back_populates="image") 

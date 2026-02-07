@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI, Response, Request, Form, UploadFile, File,
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from app.db.database import get_db_sqlite_old, sessionLocal, Base, Base_sqlite_old, engine_sqlite_old, engine, get_db, get_db_sqlite_old, Base_sqlite_old
-from app.models.models import UserDetails, posts_old, images
+from app.models.models import UserDetails, posts, images
 from app.schema.schema import UserLogin, PostSchema, ImageSchema
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
@@ -87,12 +87,12 @@ async def login(response: Response, db: Session = Depends(get_db), username=Form
 
 
 @app.post("/refresh")
-async def refresh_token(response: Response, refresh_token: Request):
-    print("Access token refreshed")
+async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
+    
 
     if refresh_token is None:
         raise HTTPException(status_code=401, detail="Refresh token missing")
-    
+    print(refresh_token)
     payload = decode_refresh_token(refresh_token)
     if payload is None: 
         raise HTTPException(status_code=401, detail="Invalid refresh token")
@@ -119,6 +119,14 @@ async def refresh_token(response: Response, refresh_token: Request):
         samesite="lax"
     )
     
+    response.set_cookie(
+        key="refresh_token", 
+        value=new_refresh_token, 
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax"
+    )
+
     return {"message": "Access token refreshed"}
 
 
@@ -129,7 +137,7 @@ async def refresh_token(response: Response, refresh_token: Request):
 async def upload_file(db: Session = Depends(get_db_sqlite_old),  
                       title: str = Form(...), content: str = Form(...), 
                        image: UploadFile = File(...), author: str = Form(...),
-                    ):
+                    _: str = Depends(get_current_user)):
      
     file_location = os.path.join(Upload_dir, image.filename)
     with open(file_location, "wb") as f:
@@ -141,21 +149,22 @@ async def upload_file(db: Session = Depends(get_db_sqlite_old),
         content = content,
         author = author,
     )
-    db_posts = posts_old(**post_information.model_dump())
+    db_posts = posts(**post_information.model_dump())
 
     db.add(db_posts)
     db.commit()
-    db.refresh(db_posts)
+    # db.refresh(db_posts)
 
     db_image = images(
-        # id= posts_old.id,
+        # id= posts.id,
         file_path=file_location,
         file_name=image.filename,
-        file_type=image.content_type
+        file_type=image.content_type,
+        post_id = db_posts.id
     )
     db.add(db_image)
     db.commit()
-    db.refresh(db_image)
+    # db.refresh(db_image)
     return {"messages" : "post updated"}
 
 
@@ -167,11 +176,11 @@ async def read_post(db: Session = Depends(get_db_sqlite_old), sort: str = Query(
                     limit: int = Query(3, le=10), search: str = Query(None), 
                     _: str = Depends(get_current_user)):
     
-    query = db.query(posts_old)
+    query = db.query(posts)
 
     #search/filtering
     if search:
-        query = query.filter(posts_old.title.ilike(f"%{search}%"))
+        query = query.filter(posts.title.ilike(f"%{search}%"))
 
     skip = (page -1 ) * limit
 
@@ -179,9 +188,9 @@ async def read_post(db: Session = Depends(get_db_sqlite_old), sort: str = Query(
 
     #Order and sorting
     if order == "asc":
-        query = query.order_by(getattr(posts_old, sort).asc())
+        query = query.order_by(getattr(posts, sort).asc())
     else:
-        query = query.order_by(getattr(posts_old, sort).desc())
+        query = query.order_by(getattr(posts, sort).desc())
 
     #pagination
     result = query.offset(skip).limit(limit).all()
@@ -195,7 +204,7 @@ async def download_image(post_id: int, db: Session = Depends(get_db_sqlite_old),
 
     path_query = (
         db.query(images)
-        .filter(images.id == post_id)
+        .filter(images.post_id == post_id)
         .first()
     )
 
