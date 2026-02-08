@@ -1,9 +1,17 @@
 {
-    "builds": [
-        {
-            "src": "api/main.py",
-            "use": "@vercel/python"
-        }
-    ]
-
+  "builds": [
+    {
+      "src": "app/main.py",
+      "use": "@vercel/python",
+      "config": {
+        "installCommand": "pip install --upgrade pip && pip install --no-deps --no-cache-dir -r requirements.lock"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app/main.py"
+    }
+  ]
 }
