@@ -4,7 +4,7 @@
       "src": "app/main.py",
       "use": "@vercel/python",
       "config": {
-        "pythonVersion": "3.14",
+        "pythonVersion": "Python 3.14.3",
         "installCommand": "pip install --no-cache-dir -r requirements.txt"
       }
     }
